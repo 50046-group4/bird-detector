@@ -1,0 +1,28 @@
+FROM python:3.7-alpine AS compile-image
+
+#RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list && \
+#	curl "https://packages.cloud.google.com/apt/doc/apt-key.gpg" | apt-key add - && \
+#	apt-get update -y && \
+#	apt-get install -y python3-tflite-runtime
+RUN apk --no-cache add musl-dev linux-headers g++ python3-dev musl-dev jpeg-dev zlib-dev
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+COPY requirements.txt /app/
+RUN pip3 install --extra-index-url https://google-coral.github.io/py-repo/  --requirement /app/requirements.txt
+COPY . /app/
+
+FROM jonarod/tensorflow_lite_alpine AS libtflite
+
+FROM python:3.7-alpine AS build-image
+LABEL name=bird-detector-detector
+# required by pillow at runtime...
+RUN apk --no-cache add libjpeg libstdc++ gcompat libgcc
+COPY --from=libtflite /home /usr/local/lib
+RUN ldconfig /usr/local/lib
+# copy the python virtual environment
+COPY --from=compile-image /opt/venv /opt/venv
+COPY --from=compile-image /app /app
+ENV PATH="/opt/venv/bin:$PATH"
+
+#CMD python /app/main.py
+CMD /bin/sh

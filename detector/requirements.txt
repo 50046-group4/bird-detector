@@ -1,0 +1,3 @@
+Pillow
+tflite_runtime
+redis

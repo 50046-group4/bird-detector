@@ -1,0 +1,12 @@
+version: "3.1"
+services:
+#  fetcher:
+#    build: fetcher
+#    volumes:
+#      - fetcher:/app
+  detector:
+    build: detector
+  redis:
+    image: "redis:alpine"
+    ports:
+      - 6379:6379
